@@ -270,7 +270,7 @@ class FeesStudentController extends Controller
         // $fee->fee_amount = $request->fee_amount;
         $fee->discount_amount = $discount_amount;
         $fee->fine_amount = $fine_amount;
-        $fee->paid_amount = $net_amount;
+        $fee->paid_amount = $request->paid_amount;
         $fee->pay_date = $request->pay_date;
         $fee->payment_method = $request->payment_method;
         $fee->note = $request->note;
