@@ -148,7 +148,8 @@ class FeesStudentController extends Controller
 
         if(isset($request->faculty) || isset($request->program) || isset($request->session) || isset($request->semester) || isset($request->section) || isset($request->category) || isset($request->student_id)){
             // Filter Fees
-            $fees = Fee::where('status', '0');
+            $fees = Fee::where('fee_amount', '>', 0)
+                        ->where('status', '0');
 
             if(!empty($request->faculty) || !empty($request->program) || !empty($request->session) || !empty($request->semester) || !empty($request->section)){
                 $fees->whereHas('studentEnroll.program', function ($query) use ($faculty){
@@ -201,98 +202,227 @@ class FeesStudentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function pay(Request $request)
+        public function pay(Request $request)
     {
         // Field Validation
         $request->validate([
             'pay_date' => 'required|date|before_or_equal:today',
             'payment_method' => 'required',
-            'fee_amount' => 'required|numeric',
-            'discount_amount' => 'required|numeric',
-            'fine_amount' => 'required|numeric',
+            'fee_amount' => 'required|numeric', // You are passing these from the form, but they are also calculated below.
+            'discount_amount' => 'required|numeric', // These are likely from the form and might not match calculated.
+            'fine_amount' => 'required|numeric',   // It's safer to recalculate from fee model.
             'paid_amount' => 'required|numeric',
         ]);
 
 
         $fee = Fee::find($request->fee_id);
 
-        // Discount Calculation
-        $discount_amount = 0;
-        $today = date('Y-m-d');
-
-        if(isset($fee->category)){
-        foreach($fee->category->discounts->where('status', '1') as $discount){
-
-        $availability = \App\Models\FeesDiscount::availability($discount->id, $fee->studentEnroll->student_id);
-
-            if(isset($availability)){
-            if($discount->start_date <= $today && $discount->end_date >= $today){
-                if($discount->type == '1'){
-                    $discount_amount = $discount_amount + $discount->amount;
-                }
-                else{
-                    $discount_amount = $discount_amount + ( ($fee->fee_amount / 100) * $discount->amount);
-                }
-            }}
-        }}
-
-
-        // Fine Calculation
-        $fine_amount = 0;
-        if(empty($fee->pay_date) || $fee->due_date < $fee->pay_date){
-
-            $due_date = strtotime($fee->due_date);
-            $today = strtotime(date('Y-m-d'));
-            $days = (int)(($today - $due_date)/86400);
-
-            if($fee->due_date < date("Y-m-d")){
-                if(isset($fee->category)){
-                foreach($fee->category->fines->where('status', '1') as $fine){
-                if($fine->start_day <= $days && $fine->end_day >= $days){
-                    if($fine->type == '1'){
-                        $fine_amount = $fine_amount + $fine->amount;
-                    }
-                    else{
-                        $fine_amount = $fine_amount + ( ($fee->fee_amount / 100) * $fine->amount);
-                    }
-                }
-                }}
-            }
+        // Make sure fee exists
+        if (!$fee) {
+            Flasher::addError(__('msg_not_found'));
+            return redirect()->back();
         }
 
-
-        // Net Amount Calculation
-        $net_amount = ($fee->fee_amount - $discount_amount) + $fine_amount;
-
-
         DB::beginTransaction();
-        // Update Data
-        // $fee->fee_amount = $request->fee_amount;
-        $fee->discount_amount = $discount_amount;
-        $fee->fine_amount = $fine_amount;
-        $fee->paid_amount = $request->paid_amount;
-        $fee->pay_date = $request->pay_date;
-        $fee->payment_method = $request->payment_method;
-        $fee->note = $request->note;
-        $fee->status = '1';
-        $fee->updated_by = Auth::guard('web')->user()->id;
-        $fee->save();
+        try { // Added try-catch for better error handling
+
+            // Discount Calculation (re-calculate from fee model to ensure accuracy)
+            $discount_amount = 0;
+            $today = date('Y-m-d');
+
+            if(isset($fee->category)){
+                foreach($fee->category->discounts->where('status', '1') as $discount){
+
+                    $availability = \App\Models\FeesDiscount::availability($discount->id, $fee->studentEnroll->student_id);
+
+                    if(isset($availability)){
+                        if($discount->start_date <= $today && $discount->end_date >= $today){
+                            if($discount->type == '1'){
+                                $discount_amount += $discount->amount; // Use += for accumulation
+                            }
+                            else{
+                                $discount_amount += ( ($fee->fee_amount / 100) * $discount->amount); // Use +=
+                            }
+                        }
+                    }
+                }
+            }
 
 
-        // Transaction
-        $transaction = new Transaction;
-        $transaction->transaction_id = Str::random(16);
-        $transaction->amount = $net_amount;
-        $transaction->type = '1';
-        $transaction->created_by = Auth::guard('web')->user()->id;
-        $fee->studentEnroll->student->transactions()->save($transaction);
-        DB::commit();
+            // Fine Calculation (re-calculate from fee model to ensure accuracy)
+            $fine_amount = 0;
+            // Only apply fine if current status is pending OR based on due date vs pay date
+            // The original logic checks against pay_date, but if this is a new payment, pay_date is being set now.
+            // A common approach is to apply fine if due_date is past AND the fee is not yet fully paid (status 0).
+            if($fee->status == '0' && $fee->due_date < date("Y-m-d")) { // Apply fine if fee is pending and past due date
+                $due_date_timestamp = strtotime($fee->due_date);
+                $current_date_timestamp = strtotime(date('Y-m-d'));
+                $days = (int)(($current_date_timestamp - $due_date_timestamp)/86400); // Corrected variable name
+
+                if(isset($fee->category)){
+                    foreach($fee->category->fines->where('status', '1') as $fine){
+                        if($fine->start_day <= $days && $fine->end_day >= $days){
+                            if($fine->type == '1'){
+                                $fine_amount += $fine->amount; // Use +=
+                            }
+                            else{
+                                $fine_amount += ( ($fee->fee_amount / 100) * $fine->amount); // Use +=
+                            }
+                        }
+                    }
+                }
+            }
 
 
-        Flasher::addSuccess(__('msg_updated_successfully'), __('msg_success'));
+            // Calculate the actual NET AMOUNT for this fee item
+            $net_amount_calculated = ($fee->fee_amount - $discount_amount) + $fine_amount;
 
-        return redirect()->back()->with('receipt', $fee->id);
+            // Get the amount actually paid by the user in this transaction
+            $paid_amount_this_transaction = $request->paid_amount;
+
+            // Calculate the total paid amount for this fee *after* this transaction
+            // Assuming $fee->paid_amount stores the cumulative paid amount from previous payments
+            $total_paid_after_this_transaction = ($fee->paid_amount ?? 0) + $paid_amount_this_transaction;
+
+
+            // Calculate the remaining due amount for setting status
+            $remaining_due_amount = max(0, $net_amount_calculated - $total_paid_after_this_transaction);
+
+
+            // --- UPDATE FEE DATA ---
+            $fee->discount_amount = $discount_amount;
+            $fee->fine_amount = $fine_amount;
+            $fee->paid_amount = $total_paid_after_this_transaction; // Store the cumulative paid amount
+            $fee->pay_date = $request->pay_date;
+            $fee->payment_method = $request->payment_method;
+            $fee->note = $request->note;
+
+            // --- CRITICAL FIX: Set status conditionally ---
+            if ($remaining_due_amount <= 0.001) { // Use a small tolerance for floating point comparisons
+                $fee->status = '1'; // Fully paid
+            } else {
+                $fee->status = '0'; // Still pending or partially paid
+            }
+            // --- END CRITICAL FIX ---
+
+            $fee->updated_by = Auth::guard('web')->user()->id;
+            $fee->save();
+
+
+            // --- TRANSACTION LOGGING ---
+            $transaction = new Transaction;
+            $transaction->transaction_id = Str::random(16);
+            $transaction->amount = $paid_amount_this_transaction; // This should be the amount of THIS payment
+            $transaction->type = '1'; // Assuming '1' is income/received
+            $transaction->created_by = Auth::guard('web')->user()->id;
+            $fee->studentEnroll->student->transactions()->save($transaction);
+
+            DB::commit();
+
+            Flasher::addSuccess(__('msg_updated_successfully'), __('msg_success'));
+
+            return redirect()->back()->with('receipt', $fee->id);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            // Log the error for debugging
+            \Log::error("Error in FeesStudentController@pay: " . $e->getMessage() . " on line " . $e->getLine());
+            Flasher::addError(__('msg_error_something_went_wrong') . ' ' . $e->getMessage());
+            return redirect()->back()->withInput();
+        }
     }
+    // public function pay(Request $request)
+    // {
+    //     // Field Validation
+    //     $request->validate([
+    //         'pay_date' => 'required|date|before_or_equal:today',
+    //         'payment_method' => 'required',
+    //         'fee_amount' => 'required|numeric',
+    //         'discount_amount' => 'required|numeric',
+    //         'fine_amount' => 'required|numeric',
+    //         'paid_amount' => 'required|numeric',
+    //     ]);
+
+
+    //     $fee = Fee::find($request->fee_id);
+
+    //     // Discount Calculation
+    //     $discount_amount = 0;
+    //     $today = date('Y-m-d');
+
+    //     if(isset($fee->category)){
+    //     foreach($fee->category->discounts->where('status', '1') as $discount){
+
+    //     $availability = \App\Models\FeesDiscount::availability($discount->id, $fee->studentEnroll->student_id);
+
+    //         if(isset($availability)){
+    //         if($discount->start_date <= $today && $discount->end_date >= $today){
+    //             if($discount->type == '1'){
+    //                 $discount_amount = $discount_amount + $discount->amount;
+    //             }
+    //             else{
+    //                 $discount_amount = $discount_amount + ( ($fee->fee_amount / 100) * $discount->amount);
+    //             }
+    //         }}
+    //     }}
+
+
+    //     // Fine Calculation
+    //     $fine_amount = 0;
+    //     if(empty($fee->pay_date) || $fee->due_date < $fee->pay_date){
+
+    //         $due_date = strtotime($fee->due_date);
+    //         $today = strtotime(date('Y-m-d'));
+    //         $days = (int)(($today - $due_date)/86400);
+
+    //         if($fee->due_date < date("Y-m-d")){
+    //             if(isset($fee->category)){
+    //             foreach($fee->category->fines->where('status', '1') as $fine){
+    //             if($fine->start_day <= $days && $fine->end_day >= $days){
+    //                 if($fine->type == '1'){
+    //                     $fine_amount = $fine_amount + $fine->amount;
+    //                 }
+    //                 else{
+    //                     $fine_amount = $fine_amount + ( ($fee->fee_amount / 100) * $fine->amount);
+    //                 }
+    //             }
+    //             }}
+    //         }
+    //     }
+
+
+    //     // Net Amount Calculation
+    //     $net_amount = ($fee->fee_amount - $discount_amount) + $fine_amount;
+
+
+    //     DB::beginTransaction();
+    //     // Update Data
+    //     // $fee->fee_amount = $request->fee_amount;
+    //     $fee->discount_amount = $discount_amount;
+    //     $fee->fine_amount = $fine_amount;
+    //     $fee->paid_amount = $request->paid_amount;
+    //     $fee->pay_date = $request->pay_date;
+    //     $fee->payment_method = $request->payment_method;
+    //     $fee->note = $request->note;
+    //     $fee->status = '1';
+    //     $fee->updated_by = Auth::guard('web')->user()->id;
+    //     $fee->save();
+
+
+    //     // Transaction
+    //     $transaction = new Transaction;
+    //     $transaction->transaction_id = Str::random(16);
+    //     $transaction->amount = $net_amount;
+    //     $transaction->type = '1';
+    //     $transaction->created_by = Auth::guard('web')->user()->id;
+    //     $fee->studentEnroll->student->transactions()->save($transaction);
+    //     DB::commit();
+
+
+    //     Flasher::addSuccess(__('msg_updated_successfully'), __('msg_success'));
+
+    //     return redirect()->back()->with('receipt', $fee->id);
+    // }
 
     /**
      * Update the specified resource in storage.

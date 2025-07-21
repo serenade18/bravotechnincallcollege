@@ -65,7 +65,7 @@
                                         <th>{{ __('field_fee') }}</th>
                                         <th>{{ __('field_discount') }}</th>
                                         <th>{{ __('field_fine_amount') }}</th>
-                                        <th>{{ __('field_net_amount') }}</th>
+                                        <th>{{ __('Due Amount') }}</th>
                                         <th>{{ __('field_due_date') }}</th>
                                         <th>{{ __('field_status') }}</th>
                                         <th>{{ __('field_action') }}</th>
@@ -73,6 +73,56 @@
                                 </thead>
                                 <tbody>
                                   @foreach( $rows as $key => $row )
+                                    @php
+                                        // --- START: Calculations for this specific row (Moved here for scope) ---
+                                        // Calculate discount amount for this row
+                                        $discount_amount = 0;
+                                        $today = date('Y-m-d');
+                                        if(isset($row->category)){
+                                            foreach($row->category->discounts->where('status', '1') as $discount){
+                                                $availability = \App\Models\FeesDiscount::availability($discount->id, $row->studentEnroll->student_id);
+                                                if(isset($availability)){
+                                                    if($discount->start_date <= $today && $discount->end_date >= $today){
+                                                        if($discount->type == '1'){
+                                                            $discount_amount += $discount->amount;
+                                                        } else {
+                                                            $discount_amount += (($row->fee_amount / 100) * $discount->amount);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Calculate fine amount for this row
+                                        $fine_amount = 0;
+                                        if(empty($row->pay_date) || $row->due_date < $row->pay_date){
+                                            $due_date = strtotime($row->due_date);
+                                            $current_date_timestamp = strtotime(date('Y-m-d'));
+                                            $days = (int)(($current_date_timestamp - $due_date)/86400);
+
+                                            if($row->due_date < date("Y-m-d")){
+                                                if(isset($row->category)){
+                                                    foreach($row->category->fines->where('status', '1') as $fine){
+                                                        if($fine->start_day <= $days && $fine->end_day >= $days){
+                                                            if($fine->type == '1'){
+                                                                $fine_amount += $fine->amount;
+                                                            } else {
+                                                                $fine_amount += (($row->fee_amount / 100) * $fine->amount);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Calculate net amount for this row
+                                        $net_amount = ($row->fee_amount - $discount_amount) + $fine_amount;
+
+                                        // Calculate paid amount (from DB) and remaining due amount for display in the Net Amount column
+                                        $paid_amount_from_db = $row->paid_amount ?? 0;
+                                        $due_amount_for_display = max(0, $net_amount - $paid_amount_from_db);
+                                        // --- END: Calculations for this specific row ---
+                                    @endphp
                                     <tr>
                                         <td>{{ $key + 1 }}</td>
                                         <td>
@@ -92,35 +142,6 @@
                                             {!! $setting->currency_symbol !!}
                                         </td>
                                         <td>
-                                            @php 
-                                            $discount_amount = 0;
-                                            $today = date('Y-m-d');
-                                            @endphp
-
-                                            @isset($row->category)
-                                            @foreach($row->category->discounts->where('status', '1') as $discount)
-
-                                            @php
-                                            $availability = \App\Models\FeesDiscount::availability($discount->id, $row->studentEnroll->student_id);
-                                            @endphp
-
-                                            @if(isset($availability))
-                                            @if($discount->start_date <= $today && $discount->end_date >= $today)
-                                                @if($discount->type == '1')
-                                                    @php
-                                                    $discount_amount = $discount_amount + $discount->amount;
-                                                    @endphp
-                                                @else
-                                                    @php
-                                                    $discount_amount = $discount_amount + ( ($row->fee_amount / 100) * $discount->amount);
-                                                    @endphp
-                                                @endif
-                                            @endif
-                                            @endif
-                                            @endforeach
-                                            @endisset
-
-
                                             @if(isset($setting->decimal_place))
                                             {{ number_format((float)$discount_amount, $setting->decimal_place, '.', '') }} 
                                             @else
@@ -129,38 +150,6 @@
                                             {!! $setting->currency_symbol !!}
                                         </td>
                                         <td>
-                                            @php
-                                                $fine_amount = 0;
-                                            @endphp
-                                            @if(empty($row->pay_date) || $row->due_date < $row->pay_date)
-                                                
-                                                @php
-                                                $due_date = strtotime($row->due_date);
-                                                $today = strtotime(date('Y-m-d')); 
-                                                $days = (int)(($today - $due_date)/86400);
-                                                @endphp
-
-                                                @if($row->due_date < date("Y-m-d"))
-
-                                                @isset($row->category)
-                                                @foreach($row->category->fines->where('status', '1') as $fine)
-                                                @if($fine->start_day <= $days && $fine->end_day >= $days)
-                                                    @if($fine->type == '1')
-                                                        @php
-                                                        $fine_amount = $fine_amount + $fine->amount;
-                                                        @endphp
-                                                    @else
-                                                        @php
-                                                        $fine_amount = $fine_amount + ( ($row->fee_amount / 100) * $fine->amount);
-                                                        @endphp
-                                                    @endif
-                                                @endif
-                                                @endforeach
-                                                @endisset
-                                                @endif
-                                            @endif
-
-
                                             @if(isset($setting->decimal_place))
                                             {{ number_format((float)$fine_amount, $setting->decimal_place, '.', '') }} 
                                             @else
@@ -169,16 +158,24 @@
                                             {!! $setting->currency_symbol !!}
                                         </td>
                                         <td>
-                                            @php
-                                            $net_amount = ($row->fee_amount - $discount_amount) + $fine_amount;
-                                            @endphp
-
                                             @if(isset($setting->decimal_place))
                                             {{ number_format((float)$net_amount, $setting->decimal_place, '.', '') }} 
                                             @else
                                             {{ number_format((float)$net_amount, 2, '.', '') }} 
                                             @endif 
                                             {!! $setting->currency_symbol !!}
+                                            <br>
+                                            @if ($due_amount_for_display > 0)
+                                                <small class="text-danger">
+                                                    <strong>{{ __('field_due_amount') }}:</strong>
+                                                    @if(isset($setting->decimal_place))
+                                                    {{ number_format((float)$due_amount_for_display, $setting->decimal_place, '.', '') }} 
+                                                    @else
+                                                    {{ number_format((float)$due_amount_for_display, 2, '.', '') }} 
+                                                    @endif 
+                                                    {!! $setting->currency_symbol !!}
+                                                </small>
+                                            @endif
                                         </td>
                                         <td>
                                             @if(isset($setting->date_format))
@@ -201,15 +198,20 @@
                                             <button type="button" class="btn btn-icon btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#payModal-{{ $row->id }}">
                                                 <i class="fas fa-plus"></i>
                                             </button>
-                                            <!-- Include Pay modal -->
-                                            @include($view.'.pay')
+                                            {{-- Pass variables explicitly to the modal partial --}}
+                                            @include($view.'.pay', [
+                                                'row' => $row,
+                                                'discount_amount' => $discount_amount,
+                                                'fine_amount' => $fine_amount,
+                                                'net_amount' => $net_amount,
+                                                'setting' => $setting // Make sure $setting is available from the parent view's controller
+                                            ])
 
                                             @can($access.'-action')
                                             <button type="button" class="btn btn-icon btn-danger btn-sm" title="{{ __('status_canceled') }}" data-bs-toggle="modal" data-bs-target="#cancelModal-{{ $row->id }}">
                                                 <i class="fas fa-times"></i>
                                             </button>
-                                            <!-- Include Unpay modal -->
-                                            @include($view.'.cancel')
+                                            @include($view.'.cancel', ['row' => $row])
                                             @endcan
 
                                             @elseif($row->status == 1)
@@ -225,8 +227,7 @@
                                             <button type="button" class="btn btn-icon btn-danger btn-sm" title="{{ __('status_unpaid') }}" data-bs-toggle="modal" data-bs-target="#unpayModal-{{ $row->id }}">
                                                 <i class="fas fa-undo"></i>
                                             </button>
-                                            <!-- Include Unpay modal -->
-                                            @include($view.'.unpay')
+                                            @include($view.'.unpay', ['row' => $row])
                                             @endcan
                                             @endif
                                         </td>
