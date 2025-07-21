@@ -77,7 +77,7 @@
 
                         <div class="form-group col-md-6">
                             <label for="net_amount" class="form-label">{{ __('field_net_amount') }} ({!! $setting->currency_symbol !!}) <span>*</span></label>
-                            <input type="text" class="form-control autonumber" name="paid_amount" id="net_amount" value="{{ round($net_amount, 2) }}"  required readonly>
+                            <input type="text" class="form-control autonumber" name="paid_amount" id="net_amount" value="{{ round($net_amount, 2) }}"  required>
 
                             <div class="invalid-feedback">
                               {{ __('required_field') }} {{ __('field_net_amount') }}
