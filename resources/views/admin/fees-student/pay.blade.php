@@ -76,8 +76,8 @@
                         </div>
 
                         <div class="form-group col-md-6">
-                            <label for="net_amount" class="form-label">{{ __('field_net_amount') }} ({!! $setting->currency_symbol !!}) <span>*</span></label>
-                            <input type="text" class="form-control autonumber" name="paid_amount" id="net_amount" value="{{ round($net_amount, 2) }}"  required>
+                            <label for="net_amount" class="form-label">{{ __('Amount To Pay') }} ({!! $setting->currency_symbol !!}) <span>*</span></label>
+                            <input type="text" class="form-control autonumber" name="paid_amount" id="net_amount" value="" placeholder="Enter amount" required>
 
                             <div class="invalid-feedback">
                               {{ __('required_field') }} {{ __('field_net_amount') }}
@@ -88,11 +88,8 @@
                             <label for="payment_method" class="form-label">{{ __('field_payment_method') }} <span>*</span></label>
                             <select class="form-control" name="payment_method" id="payment_method-{{ $row->id }}" required>
                                 <option value="">{{ __('select') }}</option>
-                                <option value="1" @if( old('payment_method') == 1 ) selected @endif>{{ __('payment_method_card') }}</option>
-                                <option value="2" @if( old('payment_method') == 2 ) selected @endif>{{ __('payment_method_cash') }}</option>
-                                <option value="3" @if( old('payment_method') == 3 ) selected @endif>{{ __('payment_method_cheque') }}</option>
-                                <option value="4" @if( old('payment_method') == 4 ) selected @endif>{{ __('payment_method_bank') }}</option>
-                                <option value="5" @if( old('payment_method') == 5 ) selected @endif>{{ __('payment_method_e_wallet') }}</option>
+                                <option value="4" @if( old('payment_method') == 4 ) selected @endif disabled>{{ __('MPESA') }}</option>
+                                <option value="5" @if( old('payment_method') == 5 ) selected @endif>{{ __('Paystack') }}</option>
                             </select>
 
                             <div class="invalid-feedback">
