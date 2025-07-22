@@ -121,14 +121,13 @@
                                         // Calculate paid amount (from DB) and remaining due amount for display in the Net Amount column
                                         $paid_amount_from_db = $row->paid_amount ?? 0;
                                         $due_amount_for_display = max(0, $net_amount - $paid_amount_from_db);
-                                        // --- END: Calculations for this specific row ---
                                     @endphp
                                     <tr>
                                         <td>{{ $key + 1 }}</td>
                                         <td>
                                             @isset($row->studentEnroll->student->student_id)
                                             <a href="{{ route('admin.student.show', $row->studentEnroll->student->id) }}">
-                                            #{{ $row->studentEnroll->student->student_id ?? '' }}
+                                             #{{ $row->studentEnroll->student->student_id ?? '' }}
                                             </a>
                                             @endisset
                                         </td>
@@ -158,23 +157,13 @@
                                             {!! $setting->currency_symbol !!}
                                         </td>
                                         <td>
-                                            @if(isset($setting->decimal_place))
-                                            {{ number_format((float)$net_amount, $setting->decimal_place, '.', '') }} 
-                                            @else
-                                            {{ number_format((float)$net_amount, 2, '.', '') }} 
-                                            @endif 
-                                            {!! $setting->currency_symbol !!}
-                                            <br>
                                             @if ($due_amount_for_display > 0)
-                                                <small class="text-danger">
-                                                    <strong>{{ __('field_due_amount') }}:</strong>
-                                                    @if(isset($setting->decimal_place))
-                                                    {{ number_format((float)$due_amount_for_display, $setting->decimal_place, '.', '') }} 
-                                                    @else
-                                                    {{ number_format((float)$due_amount_for_display, 2, '.', '') }} 
-                                                    @endif 
-                                                    {!! $setting->currency_symbol !!}
-                                                </small>
+                                                @if(isset($setting->decimal_place))
+                                                {{ number_format((float)$due_amount_for_display, $setting->decimal_place, '.', '') }} 
+                                                @else
+                                                {{ number_format((float)$due_amount_for_display, 2, '.', '') }} 
+                                                @endif 
+                                                {!! $setting->currency_symbol !!}
                                             @endif
                                         </td>
                                         <td>
