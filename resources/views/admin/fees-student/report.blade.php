@@ -168,9 +168,9 @@
                                             @elseif( $row->payment_method == 3 )
                                             {{ __('payment_method_cheque') }}
                                             @elseif( $row->payment_method == 4 )
-                                            {{ __('payment_method_bank') }}
+                                            {{ __('MPESA') }}
                                             @elseif( $row->payment_method == 5 )
-                                            {{ __('payment_method_e_wallet') }}
+                                            {{ __('PayStack') }}
                                             @elseif( $row->payment_method == 6 )
                                             {{ __('PayPal') }}
                                             @elseif( $row->payment_method == 7 )
@@ -178,8 +178,6 @@
                                             @elseif( $row->payment_method == 8 )
                                             {{ __('RazorPay') }}
                                             @elseif( $row->payment_method == 9 )
-                                            {{ __('PayStack') }}
-                                            @elseif( $row->payment_method == 10 )
                                             {{ __('Flutterwave') }}
                                             @endif
                                         </td>

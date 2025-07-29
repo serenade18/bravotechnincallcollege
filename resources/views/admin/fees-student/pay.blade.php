@@ -2,7 +2,7 @@
     <div id="payModal-{{ $row->id }}" class="modal fade" tabindex="-1" role="dialog" id="payModal-{{ $row->id }}" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
-              <form class="needs-validation" novalidate action="{{ route($route.'.pay') }}" method="post" enctype="multipart/form-data">
+              <form class="needs-validation pay-form" novalidate action="{{ route($route.'.pay') }}" method="post" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="myModalLabel">{{ $title }}</h5>
@@ -27,6 +27,7 @@
                     <br/>
 
                     <input type="text" name="fee_id" value="{{ $row->id }}" hidden>
+                    <input type="hidden" name="student_email" value="{{ $row->studentEnroll->student->email ?? '' }}">
 
                     <!-- Form Start -->
                     <div class="row">
@@ -112,3 +113,28 @@
             </div>
         </div>
     </div>
+
+@section('page_js')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const paystackAction = "{{ route('payment.paystack.process') }}"; 
+        const defaultAction = "{{ route($route.'.pay') }}";
+
+        document.querySelectorAll('.pay-form').forEach(function(form) {
+            form.addEventListener('submit', function() {
+                const paymentMethodField = form.querySelector('select[name="payment_method"]');
+                if (!paymentMethodField) return;
+
+                const paymentMethod = paymentMethodField.value;
+
+                if (paymentMethod === '5') {
+                    form.setAttribute('action', paystackAction);
+                } else {
+                    form.setAttribute('action', defaultAction);
+                }
+            });
+        });
+    });
+</script>
+@endsection
+

@@ -141,8 +141,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('/', 'DashboardController@index')->name('dashboard.index');
     Route::get('dashboard', 'DashboardController@index')->name('dashboard.index');
 
-
-
     // Student Routes
     Route::resource('admission/application', 'ApplicationController');
     Route::resource('admission/student', 'StudentController');
