@@ -126,7 +126,7 @@ class PaystackController extends Controller
                 Flasher::addError(__('msg_something_went_wrong_with_payment'), __('msg_error')); // More specific message
             }
 
-            return redirect()->route('student.fees.index');
+            return redirect()->route('admin.fees-student.index');
 
         } catch (\Exception $e) {
 
@@ -134,7 +134,7 @@ class PaystackController extends Controller
 
             Flasher::addError(__('msg_something_went_wrong'), __('msg_error'));
 
-            return redirect()->route('student.fees.index');
+            return redirect()->route('admin.fees-student.index');
         }
     }
 }
