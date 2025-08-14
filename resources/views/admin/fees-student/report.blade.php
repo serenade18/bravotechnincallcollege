@@ -53,16 +53,6 @@
             <div class="col-sm-12">
                 <div class="card">
                     @if(isset($rows))
-                    <div class="card-header">
-                        @isset($rows)
-                        @can($access.'-print')
-                        <form class="needs-validation d-inline" novalidate method="get" action="{{ route($route.'.multiprint') }}" target="_blank">
-                            <input type="hidden" name="fees" class="fees" value="">
-                            <button type="submit" class="btn btn-sm btn-dark print-btn"><i class="fas fa-print"></i> {{ __('btn_print') }} {{ __('field_selected') }}</button>
-                        </form>
-                        @endcan
-                        @endisset
-                    </div>
 
                     <div class="card-block">
                         <!-- [ Data table ] start -->
