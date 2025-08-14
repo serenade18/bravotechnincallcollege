@@ -501,7 +501,7 @@ class FeesStudentController extends Controller
 
         if(isset($request->faculty) || isset($request->program) || isset($request->session) || isset($request->semester) || isset($request->section) || isset($request->category) || isset($request->student_id)){
             // Filter Fees
-            $fees = Fee::where('status', '!=', '0');
+            $fees = Fee::query();
 
             if(!empty($request->faculty) || !empty($request->program) || !empty($request->session) || !empty($request->semester) || !empty($request->section)){
                 $fees->whereHas('studentEnroll.program', function ($query) use ($faculty){
@@ -543,6 +543,8 @@ class FeesStudentController extends Controller
             $data['rows'] = $fees->orderBy('updated_at', 'desc')->get();
         }
 
+        $data['discount_amount'] = 0;
+        $data['fine_amount'] = 0;
 
         return view($this->view.'.report', $data);
     }

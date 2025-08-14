@@ -41,11 +41,9 @@ Route::middleware(['XSS'])->namespace('Web')->group(function () {
     Route::get('application', 'ApplicationController@index')->name('application.index');
     Route::post('application', 'ApplicationController@store')->name('application.store');
 
-
     // SetCookie Route
     Route::get('/set-cookie', 'HomeController@setCookie')->name('setCookie');
 });
-
 
 // Ajax Filter Routes
 Route::middleware(['XSS'])->group(function () {
@@ -69,7 +67,6 @@ Route::middleware(['XSS'])->group(function () {
 
 });
 
-
 // Set Lang Version
 Route::get('locale/language/{locale}', function ($locale) {
 
@@ -81,13 +78,11 @@ Route::get('locale/language/{locale}', function ($locale) {
 
 })->name('version');
 
-
 // Auth Routes
 Route::middleware(['XSS'])->prefix('admin')->group(function () {
     // Auth::routes();
     Auth::routes(['register' => false]);
 });
-
 
 // Verify Purchase
 Route::middleware(['XSS'])->group(function () {
@@ -96,7 +91,6 @@ Route::middleware(['XSS'])->group(function () {
     Route::post('verify-purchase', 'PurchaseVerificationController@verify')->name('verify-purchase');
 
 });
-
 
 // Payment Routes
 Route::middleware(['XSS'])->name('payment.')->namespace('Payment')->prefix('payment')->group(function () {
@@ -133,7 +127,6 @@ Route::middleware(['XSS'])->name('payment.')->namespace('Payment')->prefix('paym
 
 });
 
-
 // Admin Routes
 Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Admin')->prefix('admin')->group(function () {
 
@@ -153,8 +146,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::post('admission/student-import-store', 'StudentController@importStore')->name('student.import.store');
     Route::get('admission/student-password-multiprint', 'StudentController@multiPrintPassword')->name('student.password-multiprint');
 
-
-
     // Admission Routes
     Route::resource('admission/student-transfer-out', 'StudentTransferOutController');
     Route::resource('admission/student-transfer-in', 'StudentTransferInController');
@@ -163,8 +154,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('admission/id-card-print/{id}', 'StudentIdCardController@print')->name('id-card.print');
     Route::get('admission/id-card-multiprint', 'StudentIdCardController@multiPrint')->name('id-card.multiprint');
     Route::resource('admission/id-card-setting', 'StudentIdCardSettingController');
-
-
 
     // Student Attendance Routes
     Route::resource('student-attendance', 'StudentAttendanceController');
@@ -184,8 +173,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::resource('student/course-complete', 'CourseCompleteController');
     Route::resource('student/student-alumni', 'StudentAlumniController');
 
-
-
     // Academic Routes
     Route::resource('academic/faculty', 'FacultyController');
     Route::resource('academic/program', 'ProgramController');
@@ -200,8 +187,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::post('academic/subject-import-store', 'SubjectController@importStore')->name('subject.import.store');
     Route::resource('academic/enroll-subject', 'EnrollSubjectController');
 
-
-
     // Routine Routes
     Route::resource('routine/class-routine', 'ClassRoutineController');
     Route::get('routine/class-routine-teacher', 'ClassRoutineController@teacher')->name('class-routine.teacher');
@@ -211,8 +196,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('routine/routine-setting/class', 'RoutineSettingController@class')->name('routine-setting.class');
     Route::get('routine/routine-setting/exam', 'RoutineSettingController@exam')->name('routine-setting.exam');
     Route::post('routine/routine-setting/store', 'RoutineSettingController@store')->name('routine-setting.store');
-
-
 
     // Exam Routes
     Route::resource('exam/exam-attendance', 'ExamAttendanceController');
@@ -231,8 +214,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('exam/admit-card-download/{id}', 'AdmitCardController@download')->name('admit-card.download');
     Route::resource('exam/admit-setting', 'AdmitCardSettingController');
 
-
-
     // Assignment Routes
     Route::resource('download/assignment', 'AssignmentController');
     Route::post('download/assignment-marking', 'AssignmentController@marking')->name('assignment.marking');
@@ -242,8 +223,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     // Content Routes
     Route::resource('download/content', 'ContentController');
     Route::resource('download/content-type', 'ContentTypeController');
-
-
 
     // Fees Collection Student
     Route::get('fees-student', 'FeesStudentController@index')->name('fees-student.index');
@@ -267,8 +246,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::resource('fees-category', 'FeesCategoryController');
     Route::resource('fees-receipt', 'ReceiptSettingController');
 
-
-
     // Staff Routes
     Route::resource('staff/user','UserController');
     Route::get('staff/user-status/{id}', 'UserController@status')->name('user.status');
@@ -287,16 +264,12 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('staff/payroll-print/{id}', 'PayrollController@print')->name('payroll.print');
     Route::resource('staff/pay-slip-setting', 'PaySlipSettingController');
 
-
-
     // Human Resource Routes
     Route::resource('staff/designation', 'DesignationController');
     Route::resource('staff/department', 'DepartmentController');
     Route::resource('staff/work-shift-type', 'WorkShiftTypeController');
     Route::resource('staff/staff-note', 'StaffNoteController');
     Route::resource('staff/tax-setting', 'TaxSettingController');
-
-
 
     // Staff Attendance Routes
     Route::resource('attendance/staff-daily-attendance', 'StaffAttendanceController');
@@ -305,15 +278,11 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('attendance/staff-hourly-report', 'StaffHourlyAttendanceController@report')->name('staff-hourly-attendance.report');
     Route::get('attendance/staff-hourly-report/{id}', 'StaffHourlyAttendanceController@reportDetails')->name('staff-hourly-attendance.report.details');
 
-
-
     // Staff Leave Routes
     Route::resource('leave/staff-leave', 'LeaveController');
     Route::resource('leave/leave-type', 'LeaveTypeController');
     Route::resource('leave/leave-manage', 'LeaveManagementController');
     Route::post('leave/leave-manage-status/{id}', 'LeaveManagementController@status')->name('leave-manage.status');
-
-
 
     // Income Expense Routes
     Route::resource('account/income', 'IncomeController');
@@ -322,8 +291,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::resource('account/expense-category', 'ExpenseCategoryController');
     Route::resource('account/outcome', 'OutcomeCalculationController');
 
-
-
     // Communicate Routes
     Route::resource('communicate/email-notify', 'EmailNotifyController');
     Route::resource('communicate/sms-notify', 'SMSNotifyController');
@@ -331,8 +298,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('communicate/event-calendar', 'EventController@calendar')->name('event.calendar');
     Route::resource('communicate/notice', 'NoticeController');
     Route::resource('communicate/notice-category', 'NoticeCategoryController');
-
-
 
     // Library Routes
     Route::resource('library/book-list', 'BookController');
@@ -355,8 +320,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('member/library-outsider-card/{id}', 'OutSideUserController@libraryCard')->name('library-outsider.card');
     Route::resource('library-card-setting', 'LibraryIdCardSettingController');
 
-
-
     // Inventory Routes
     Route::resource('inventory/item-list', 'ItemController');
     Route::resource('inventory/item-issue', 'ItemIssueController');
@@ -366,8 +329,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::resource('inventory/item-supplier', 'ItemSupplierController');
     Route::resource('inventory/item-category', 'ItemCategoryController');
 
-
-
     // Hostel Routes
     Route::resource('hostel/hostel', 'HostelController');
     Route::resource('hostel/hostel-room', 'HostelRoomController');
@@ -375,15 +336,11 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::resource('hostel-student', 'HostelStudentController');
     Route::resource('hostel-staff', 'HostelStaffController');
 
-
-
     // Transport Routes
     Route::resource('transport-route', 'TransportRouteController');
     Route::resource('transport-vehicle', 'TransportVehicleController');
     Route::resource('transport-student', 'TransportStudentController');
     Route::resource('transport-staff', 'TransportStaffController');
-
-
 
     // Visitor Routes
     Route::resource('frontdesk/visitor', 'VisitorController');
@@ -417,9 +374,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::post('frontdesk/meeting-status/{id}', 'MeetingScheduleController@status')->name('meeting.status');
     Route::resource('frontdesk/meeting-type', 'MeetingTypeController');
 
-
-
-
     // Marksheet Routes
     Route::resource('transcript/marksheet', 'MarksheetController');
     Route::get('transcript/marksheet-print/{id}', 'MarksheetController@print')->name('marksheet.print');
@@ -437,8 +391,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('transcript/certificate-multiprint', 'CertificateController@multiPrint')->name('certificate.multiprint');
     Route::resource('transcript/certificate-template', 'CertificateTemplateController');
 
-
-
     // Report Routes
     Route::get('report/student', 'ReportController@student')->name('report.student');
     Route::get('report/subject', 'ReportController@subject')->name('report.subject');
@@ -455,8 +407,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('report/inventory', 'ReportController@inventory')->name('report.inventory');
     Route::get('report/hostel', 'ReportController@hostel')->name('report.hostel');
     Route::get('report/transport', 'ReportController@transport')->name('report.transport');
-
-
 
     // Setting Routes
     Route::get('setting', 'SettingController@index')->name('setting.index');
@@ -498,15 +448,11 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
     Route::get('setting/student-panel', 'FieldController@panel')->name('student.panel');
     Route::post('setting/field-store', 'FieldController@store')->name('field.store');
 
-
-
     // Profile Routes
     Route::resource('profile','ProfileController');
     Route::get('profile/account', 'ProfileController@account')->name('profile.account');
     Route::post('profile/changemail', 'ProfileController@changeMail')->name('profile.changemail');
     Route::post('profile/changepass', 'ProfileController@changePass')->name('profile.changepass');
-
-
 
     // Front Web Routes
     Route::prefix('web')->namespace('Web')->group(function () {
@@ -526,7 +472,6 @@ Route::middleware(['auth:web', 'XSS', 'license'])->name('admin.')->namespace('Ad
         Route::resource('topbar-setting', 'TopbarSettingController');
     });
 });
-
 
 // Student Login Routes
 Route::prefix('student')->name('student.')->namespace('Student')->group(function(){
@@ -552,7 +497,6 @@ Route::prefix('student')->name('student.')->namespace('Student')->group(function
     });
 
 });
-
 
 
 // Student Dashboard Routes
