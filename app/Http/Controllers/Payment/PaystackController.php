@@ -57,8 +57,8 @@ class PaystackController extends Controller
             $data = array(
                 "amount" => $amount_to_pay * 100, // Use the user's input amount, converted to cents/kobo
                 "reference" => Paystack::genTranxRef(),
-                "email" => $request->student_email ?? 'no-reply@example.com', // Ensure this email is correctly passed from the form or retrieved
-                "currency" => 'KES', // This is now fixed as per previous discussion
+                "email" => $request->student_email ?? 'no-reply@example.com',
+                "currency" => 'KES', 
                 "orderID" => str_pad($fee_id, 6, '0', STR_PAD_LEFT),
                 "callback_url" => route('payment.paystack.callback'),
                 "metadata" => [
@@ -113,7 +113,7 @@ class PaystackController extends Controller
                 // Update Fee
                 if(isset($fee_id)){
                     // Pass the actual amount the user paid to your payStudentFee method
-                    $this->payStudentFee($fee_id, 9, $amount_paid_by_user);
+                    $this->payStudentFee($fee_id, 5, $amount_paid_by_user);
                 }
 
                 Flasher::addSuccess(__('msg_your_payment_successful'), __('msg_success'));
