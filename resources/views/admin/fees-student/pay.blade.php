@@ -49,14 +49,29 @@
                             </div>
                         </div>
 
+                        @php
+                            $due_amount = max(($row->fee_amount - $discount_amount + $fine_amount) - ($row->paid_amount ?? 0), 0);
+                        @endphp
                         <div class="form-group col-md-6">
                             <label for="fee_amount" class="form-label">{{ __('field_amount') }} ({!! $setting->currency_symbol !!}) <span>*</span></label>
-                            <input type="text" class="form-control autonumber" name="fee_amount" id="fee_amount" value="{{ round($row->fee_amount, 2) }}" required readonly>
+                            <input type="text" 
+                                id="fee_amount_display" 
+                                class="form-control autonumber" 
+                                value="{{ round($due_amount, 2) }}" 
+                                readonly
+                            >
 
                             <div class="invalid-feedback">
                               {{ __('required_field') }} {{ __('field_amount') }}
                             </div>
                         </div>
+
+                        <!-- Keep original fee amount hidden so the controller logic stays the same -->
+                        <input type="hidden" 
+                            name="fee_amount" 
+                            value="{{ round($row->fee_amount, 2) }}"
+                            id="fee_amount"
+                        >
 
                         <div class="form-group col-md-6">
                             <label for="discount_amount" class="form-label">{{ __('field_discount') }} ({!! $setting->currency_symbol !!}) <span>*</span></label>
